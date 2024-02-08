@@ -1,5 +1,5 @@
 import streamlit as st
-import matplotlib.pyplot as plt
+import plotly.express as px
 from backend import filereader
 
 file = st.file_uploader("Upload your file here")
@@ -9,7 +9,6 @@ if file:
     try:
         # Display summary statistics
         data = filereader(file)
-
         data.fillna(0)
         st.subheader("Summary Statistics")
         st.write(data.describe(), unsafe_allow_html=True)
@@ -18,72 +17,46 @@ if file:
         st.subheader("Data Visualization:")
         var_col1 = st.selectbox("Select 1st variable:", data.columns)
         var_col2 = st.selectbox("Select 2nd variable:", data.columns)
-        plots = ["Line", "Bar", "Pie", "Scatter"]
-        regression = ["Linear Regression"]
-        reg = st.selectbox("Select Regression type", regression)
-        plot_var = st.selectbox("Select type of plot/chart", plots)
+        var_col3 = st.selectbox("Select 3rd variable:", data.columns)
+
+        plots = ["Line", "Bar", "Scatter", "Pie Chart", "Donut Chart", "Clustered Column Chart"]
+        plot_var = st.selectbox("Select type of plot/chart", plots, key='plot_var')
+
+        st.markdown("---")  # Add a horizontal line for better separation
 
         match plot_var:
             case "Line":
-                plt.plot(data[var_col1], data[var_col2], linestyle="dashed")
-                plt.xlabel(var_col1)
-                plt.ylabel(var_col2)
-                st.pyplot()
+                # Create a line chart using Plotly Express
+                fig = px.line(data, x=var_col1, y=var_col2, color=var_col3, title="Line Chart")
+                st.plotly_chart(fig)
 
             case "Bar":
-                plt.bar(data[var_col1], data[var_col2])
-                plt.xlabel(var_col1)
-                plt.ylabel(var_col2)
-                st.pyplot()
-
-            # case "Pie":
-            #     plt.pie(data, labels=data.columns)
-            #     st.pyplot()
+                # Create a bar chart using Plotly Express with a colorful continuous color scale
+                fig = px.bar(data, x=var_col1, y=var_col2, color=var_col3, title="Bar Chart", color_continuous_scale="Viridis")
+                st.plotly_chart(fig)
 
             case "Scatter":
-                plt.scatter(data[var_col1], data[var_col2])
-                plt.xlabel(var_col1)
-                plt.ylabel(var_col2)
-                st.pyplot()
-            case "Linear Regression":
-                import pandas as pd
-                import numpy as np
-                import matplotlib.pyplot as plt
-                from sklearn.model_selection import train_test_split
-                from sklearn.linear_model import LinearRegression
-                from sklearn.metrics import mean_squared_error
+                # Create a scatter plot using Plotly Express with a colorful continuous color scale
+                fig = px.scatter(data, x=var_col1, y=var_col2, color=var_col3, title="Scatter Plot", color_continuous_scale="Viridis")
+                st.plotly_chart(fig)
 
+            case "Pie Chart":
+                # Create a pie chart using Plotly Express
+                fig = px.pie(data, names=var_col1, title="Pie Chart", color=var_col3)
+                st.plotly_chart(fig)
 
-                # Assuming your CSV file has columns named 'X' and 'y' for the independent and dependent variables
-                X = data[var_col1].values.reshape(-1, 1)
-                y = data[var_col2].values
+            case "Donut Chart":
+                st.subheader("Donut Chart:")
+                # Create a donut chart using Plotly Express
+                fig = px.sunburst(data, path=[var_col1, var_col2, var_col3], title="Donut Chart", color=var_col3)
+                fig.update_layout(margin=dict(l=0, r=0, b=0, t=30))
+                st.plotly_chart(fig)
 
-                # Split the data into training and testing sets
-                X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+            case "Clustered Column Chart":
+                st.subheader("Clustered Column Chart:")
+                # Create a clustered column chart using Plotly Express
+                fig = px.bar(data, x=var_col1, y=var_col2, color=var_col3, barmode="group", title="Clustered Column Chart", color_continuous_scale="YlOrBr")
+                st.plotly_chart(fig)
 
-                # Create a Linear Regression model
-                model = LinearRegression()
-
-                # Train the model on the training set
-                model.fit(X_train, y_train)
-
-                # Make predictions on the test set
-                y_pred = model.predict(X_test)
-
-                # Calculate the mean squared error
-                mse = mean_squared_error(y_test, y_pred)
-                st.write(f'Mean Squared Error: {mse}')
-
-                # Plot the original data and the regression line
-                plt.scatter(X_test, y_test, color='black', label='Actual data')
-                plt.plot(X_test, y_pred, color='blue', linewidth=3, label='Regression line')
-                plt.xlabel('Independent Variable')
-                plt.ylabel('Dependent Variable')
-                plt.legend()
-                st.pyplot()
-
-
-
-except AttributeError:
-
+    except AttributeError:
         pass
